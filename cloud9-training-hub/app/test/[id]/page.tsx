@@ -35,7 +35,7 @@ export default function TestPage() {
     if (sectionMaybe) {
       setAnswers(Array(sectionMaybe.questions.length).fill(''))
     }
-  }, [sectionMaybe])
+  }, [id])
 
   if (!mounted || !state) return null
   if (!sectionMaybe) return <p className="p-8 text-sm text-muted">Section not found.</p>
@@ -87,14 +87,14 @@ export default function TestPage() {
     try {
       // Score all questions in parallel
       const results = await Promise.all(
-        section.questions.map((q, i) => scoreQuestion(q, answers[i]))
+        section.questions.map((q, i) => scoreQuestion(q, answers[i] ?? ''))
       )
 
       const isCleanRun = results.every((r) => r.pass)
-      const currentState = loadState()!
+      const currentState = loadState() ?? state!
 
       const attempt: Attempt = {
-        runNumber: attemptNumber,
+        runNumber: (currentState.sections[id]?.attempts.length ?? 0) + 1,
         isCleanRun,
         timestamp: new Date().toISOString(),
         questions: results,
