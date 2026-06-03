@@ -138,7 +138,7 @@ export default function HomePage() {
                 href="/final-test"
                 className="text-[12px] font-semibold bg-ink text-warm-card px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity"
               >
-                {finalProgress ? 'Continue' : 'Begin'}
+                {(finalProgress?.attempts.length ?? 0) > 0 ? 'Continue' : 'Begin'}
               </Link>
             )}
           </div>

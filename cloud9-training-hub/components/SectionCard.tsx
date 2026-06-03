@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { SectionDef, SectionProgress } from '@/lib/types'
 
@@ -14,17 +12,19 @@ export default function SectionCard({ section, progress, unlocked }: Props) {
   const attemptCount = progress?.attempts.length ?? 0
   const consecutiveCleanRuns = progress?.consecutiveCleanRuns ?? 0
 
-  const badge = {
+  const badgeMap: Record<SectionProgress['status'], { label: string; className: string }> = {
     'not-started': { label: 'Not Started', className: 'border border-warm-border text-faint' },
     'in-progress': { label: 'In Progress', className: 'bg-warm-bg text-muted' },
     passed: { label: 'Passed', className: 'bg-sage-bg text-sage' },
-  }[status]
+  }
+  const badge = badgeMap[status]
 
   return (
     <div
       className={`bg-warm-card border border-warm-border rounded-card p-4 flex items-center gap-4 transition-opacity ${
         !unlocked ? 'opacity-40 pointer-events-none' : ''
       }`}
+      aria-hidden={!unlocked}
     >
       <div className="text-[10px] font-bold tracking-widest uppercase text-faint min-w-[28px]">
         {String(section.number).padStart(2, '0')}
