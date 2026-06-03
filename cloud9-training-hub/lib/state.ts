@@ -18,14 +18,19 @@ export function loadState(): AppState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return raw ? (JSON.parse(raw) as AppState) : null
-  } catch {
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') console.warn('bth_state parse error', e)
     return null
   }
 }
 
 export function saveState(state: AppState): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // Storage quota exceeded — state not persisted
+  }
 }
 
 export function initState(traineeName: string): AppState {
@@ -48,7 +53,7 @@ export function recordAttempt(state: AppState, sectionId: string, attempt: Attem
   const isPassed = newConsecutive >= 2
 
   const updated: SectionProgress = {
-    status: isPassed ? 'passed' : 'in-progress',
+    status: (isPassed || section.status === 'passed') ? 'passed' : 'in-progress',
     attempts: [...section.attempts, attempt],
     consecutiveCleanRuns: newConsecutive,
   }
@@ -73,6 +78,7 @@ export function isSectionUnlocked(state: AppState, sectionId: string): boolean {
 }
 
 export function markQuickReferenceDone(state: AppState): AppState {
+  const quickRefId = SECTION_ORDER[SECTION_ORDER.length - 1]
   const section: SectionProgress = {
     status: 'passed',
     attempts: [],
@@ -80,7 +86,7 @@ export function markQuickReferenceDone(state: AppState): AppState {
   }
   return {
     ...state,
-    sections: { ...state.sections, 'quick-reference': section },
+    sections: { ...state.sections, [quickRefId]: section },
   }
 }
 
