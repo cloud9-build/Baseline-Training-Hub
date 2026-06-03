@@ -1,3 +1,8 @@
+/**
+ * All training section definitions and final test questions.
+ * Criteria strings are sent verbatim to the scoring API — do not paraphrase.
+ */
+
 import { SectionDef, Question } from './types'
 
 export const sections: SectionDef[] = [
@@ -180,6 +185,11 @@ export const sections: SectionDef[] = [
   },
 ]
 
+/**
+ * Questions for the final test. Not part of any SectionDef and not returned
+ * by getSectionById. Use FINAL_TEST_ID from state.ts as the sectionId when
+ * scoring these questions.
+ */
 export const finalTestQuestions: Question[] = [
   {
     id: 'final-q1',
@@ -233,6 +243,10 @@ export const finalTestQuestions: Question[] = [
   },
 ]
 
+/**
+ * Returns the SectionDef for the given section ID.
+ * Returns undefined for unknown IDs, including 'final-test'.
+ */
 export function getSectionById(id: string): SectionDef | undefined {
   return sections.find((s) => s.id === id)
 }
