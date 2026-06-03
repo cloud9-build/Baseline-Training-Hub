@@ -34,8 +34,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       messages: [{ role: 'user', content: userMessage }],
     })
 
-    const text = message.content[0].type === 'text' ? message.content[0].text : ''
-    const parsed = JSON.parse(text) as ScoreResponse
+    const block = message.content[0]
+    if (block.type !== 'text') throw new Error('Unexpected content type from scoring API')
+    const parsed = JSON.parse(block.text) as ScoreResponse
 
     if (typeof parsed.pass !== 'boolean' || typeof parsed.feedback !== 'string') {
       throw new Error('Invalid response shape')
