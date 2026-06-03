@@ -7,10 +7,15 @@ export function formatResultsEmail(data: SendResultsRequest): string {
     ? 'Passed'
     : `In Progress — ${consecutiveCleanRuns} of 2 consecutive clean runs achieved`
 
+  const latestTimestamp = attempts[attempts.length - 1]?.timestamp
+  const dateStr = latestTimestamp
+    ? new Date(latestTimestamp).toLocaleString('en-US', { timeZone: 'America/Chicago' })
+    : new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
+
   const lines: string[] = [
     `Trainee: ${traineeName}`,
     `Section: ${sectionName}`,
-    `Date: ${new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })}`,
+    `Date: ${dateStr}`,
     `Status: ${status}`,
     `Total attempts: ${attempts.length}`,
     '',

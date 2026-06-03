@@ -70,3 +70,14 @@ it('includes context text when present', () => {
   })
   expect(result).toContain('Guest message: Hi, is parking available?')
 })
+
+it('includes a Date header in output', () => {
+  const result = formatResultsEmail({
+    traineeName: 'Jordan',
+    sectionName: 'Before You Reply',
+    attempts: [attempt],
+    passed: false,
+    consecutiveCleanRuns: 0,
+  })
+  expect(result).toContain('Date:')
+})

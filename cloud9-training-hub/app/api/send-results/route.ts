@@ -21,7 +21,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     })
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    console.error('[send-results] Resend error:', err)
     return NextResponse.json({ error: 'Failed to send results' }, { status: 500 })
   }
 }
