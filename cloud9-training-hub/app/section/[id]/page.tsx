@@ -57,7 +57,9 @@ export default function SectionStudyPage() {
 
         {/* Heading */}
         <h1 className="text-2xl font-bold text-ink mb-1">{section.title}</h1>
-        <p className="text-sm text-muted mb-8">Study this content before taking the test.</p>
+        <p className="text-sm text-muted mb-8">
+          {section.hasTest ? 'Study this content before taking the test.' : 'Reference material — read and mark as complete when done.'}
+        </p>
 
         {/* Content */}
         <StudyContent sectionId={id} />
@@ -71,14 +73,14 @@ export default function SectionStudyPage() {
             >
               Start test
             </Link>
-          ) : (
+          ) : id === 'quick-reference' ? (
             <button
               onClick={handleMarkDone}
               className="bg-ink text-warm-card text-sm font-semibold px-6 py-3 rounded-full hover:opacity-80 transition-opacity"
             >
               Done — mark as complete
             </button>
-          )}
+          ) : null}
           <Link href="/" className="text-sm font-semibold text-muted px-6 py-3 rounded-full border border-warm-border hover:border-ink transition-colors">
             Back to home
           </Link>
