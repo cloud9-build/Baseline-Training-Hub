@@ -202,9 +202,11 @@ export default function TestPage() {
                   contextText={q.contextText}
                   value={answers[i] ?? ''}
                   onChange={(val) => {
-                    const updated = [...answers]
-                    updated[i] = val
-                    setAnswers(updated)
+                    setAnswers((prev) => {
+                      const updated = [...prev]
+                      updated[i] = val
+                      return updated
+                    })
                   }}
                   disabled={isLoading}
                 />

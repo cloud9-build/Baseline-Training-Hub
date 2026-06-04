@@ -111,7 +111,8 @@ export default function FinalTestPage() {
       }).catch(() => {})
 
       setPhase({ type: 'results', results, isCleanRun, consecutiveCleanRuns, isPassed })
-    } catch {
+    } catch (err) {
+      console.error('Final test submission failed:', err)
       setPhase({ type: 'error', message: 'Something went wrong. Please try submitting again.' })
     }
   }
@@ -174,9 +175,11 @@ export default function FinalTestPage() {
                   contextText={q.contextText}
                   value={answers[i] ?? ''}
                   onChange={(val) => {
-                    const updated = [...answers]
-                    updated[i] = val
-                    setAnswers(updated)
+                    setAnswers((prev) => {
+                      const updated = [...prev]
+                      updated[i] = val
+                      return updated
+                    })
                   }}
                   disabled={isLoading}
                 />
