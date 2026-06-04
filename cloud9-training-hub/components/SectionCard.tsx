@@ -55,6 +55,7 @@ export default function SectionCard({ section, progress, unlocked }: Props) {
         <Link
           href={`/section/${section.id}`}
           className="text-[12px] font-semibold text-muted hover:text-ink transition-colors"
+          tabIndex={unlocked ? undefined : -1}
         >
           {status === 'passed' ? 'Review' : 'Study'}
         </Link>

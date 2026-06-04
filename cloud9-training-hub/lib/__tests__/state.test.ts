@@ -82,6 +82,16 @@ describe('recordAttempt', () => {
     state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 2))
     expect(state.sections['before-you-reply'].attempts).toHaveLength(2)
   })
+
+  it('preserves passed status on retake after passing', () => {
+    let state: AppState = { traineeName: 'Jordan', sections: {} }
+    state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 1))
+    state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 2))
+    expect(state.sections['before-you-reply'].status).toBe('passed')
+    // Retake with a failed run — should not un-pass the section
+    state = recordAttempt(state, 'before-you-reply', mockAttempt(false, 3))
+    expect(state.sections['before-you-reply'].status).toBe('passed')
+  })
 })
 
 describe('isSectionUnlocked', () => {
