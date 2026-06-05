@@ -30,19 +30,7 @@ export default function ResultsView({
           <div>
             <div className="text-sm font-semibold text-ink">Section passed — well done.</div>
             <div className="text-[12px] text-muted mt-0.5">
-              2 consecutive clean runs achieved in {attemptNumber} total attempt{attemptNumber !== 1 ? 's' : ''}.
-            </div>
-          </div>
-        </div>
-      ) : isCleanRun ? (
-        <div className="bg-sage-bg border border-sage-border rounded-card p-4 flex items-start gap-3">
-          <span className="text-sage font-bold text-base">✓</span>
-          <div>
-            <div className="text-sm font-semibold text-ink">
-              Clean run — {consecutiveCleanRuns} of 2 consecutive clean runs achieved
-            </div>
-            <div className="text-[12px] text-muted mt-0.5">
-              One more clean run and this section is passed.
+              Clean run achieved in {attemptNumber} total attempt{attemptNumber !== 1 ? 's' : ''}.
             </div>
           </div>
         </div>
@@ -54,7 +42,7 @@ export default function ResultsView({
               Run failed — one or more questions didn&apos;t pass
             </div>
             <div className="text-[12px] text-muted mt-0.5">
-              Consecutive clean runs reset to 0. Restart from Question 1.
+              Retry the failed questions to get a clean run and pass.
             </div>
           </div>
         </div>
@@ -93,7 +81,7 @@ export default function ResultsView({
               onClick={onRestart}
               className="bg-ink text-warm-card text-sm font-semibold px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity"
             >
-              Restart from Question 1
+              Retry
             </button>
             <button
               onClick={onReviewStudy}

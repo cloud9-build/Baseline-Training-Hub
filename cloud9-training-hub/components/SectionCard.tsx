@@ -35,7 +35,7 @@ export default function SectionCard({ section, progress, unlocked }: Props) {
         {section.hasTest && status !== 'not-started' && (
           <div className="text-[11px] text-faint mt-0.5">
             {attemptCount} attempt{attemptCount !== 1 ? 's' : ''}
-            {status === 'in-progress' && ` · ${consecutiveCleanRuns} of 2 clean runs`}
+            {status === 'in-progress' && ` · ${consecutiveCleanRuns > 0 ? '1 clean run' : '0 clean runs'}`}
           </div>
         )}
         {section.hasTest && status === 'not-started' && (

@@ -41,9 +41,16 @@ export default function FinalTestPage() {
   }
 
   const finalProgress = state.sections[FINAL_TEST_ID]
+  const lastAttempt = finalProgress?.attempts[finalProgress.attempts.length - 1]
   const attemptNumber = (finalProgress?.attempts.length ?? 0) + 1
 
-  // Fix 1: Use `Question` type instead of `typeof finalTestQuestions[0]`
+  // If last attempt was a clean run, treat this as a fresh voluntary retake (all questions)
+  // If last attempt had failures, only show the questions that failed
+  const allIndices = finalTestQuestions.map((_, i) => i)
+  const retakeIndices: number[] = (!lastAttempt || lastAttempt.isCleanRun)
+    ? allIndices
+    : allIndices.filter((i) => !lastAttempt.questions[i]?.pass)
+
   async function scoreQuestion(q: Question, answer: string): Promise<QuestionResult> {
     const req: ScoreRequest = {
       sectionId: FINAL_TEST_ID,
@@ -73,16 +80,24 @@ export default function FinalTestPage() {
     setPhase({ type: 'loading' })
 
     try {
-      // Fix 2: Use `answers[i] ?? ''` (not bare `answers[i]`)
-      const results = await Promise.all(
-        finalTestQuestions.map((q, i) => scoreQuestion(q, answers[i] ?? ''))
+      // Score only the questions being retaken, in parallel
+      const scoredRetakes = await Promise.all(
+        retakeIndices.map(async (i) => {
+          const result = await scoreQuestion(finalTestQuestions[i], answers[i] ?? '')
+          return { index: i, result }
+        })
       )
 
+      // Merge: carry forward passed results, use new scores for retakes
+      const results: QuestionResult[] = finalTestQuestions.map((_, i) => {
+        const retakeResult = scoredRetakes.find((r) => r.index === i)
+        if (retakeResult) return retakeResult.result
+        return lastAttempt!.questions[i]
+      })
+
       const isCleanRun = results.every((r) => r.pass)
-      // Fix 3: Use `loadState() ?? state!` (safe — non-null guard above ensures state is set)
       const currentState = loadState() ?? state!
 
-      // Fix 4: Compute runNumber from currentState inside handleSubmit for accuracy
       const attempt: Attempt = {
         runNumber: (currentState.sections[FINAL_TEST_ID]?.attempts.length ?? 0) + 1,
         isCleanRun,
@@ -138,10 +153,7 @@ export default function FinalTestPage() {
         </div>
 
         <h1 className="text-2xl font-bold text-ink mb-1">Final Test</h1>
-        <p className="text-sm text-muted mb-8">
-          Attempt {attemptNumber}
-          {finalProgress?.consecutiveCleanRuns === 1 ? ' · 1 of 2 consecutive clean runs achieved' : ''}
-        </p>
+        <p className="text-sm text-muted mb-8">Attempt {attemptNumber}</p>
 
         {phase.type === 'results' && (
           <ResultsView
@@ -167,33 +179,55 @@ export default function FinalTestPage() {
 
         {(isAnswering || isLoading) && (
           <form onSubmit={handleSubmit} className="space-y-8">
-            {finalTestQuestions.map((q, i) => (
-              <div key={q.id}>
-                <TestQuestion
-                  index={i}
-                  questionText={q.questionText}
-                  contextText={q.contextText}
-                  value={answers[i] ?? ''}
-                  onChange={(val) => {
-                    setAnswers((prev) => {
-                      const updated = [...prev]
-                      updated[i] = val
-                      return updated
-                    })
-                  }}
-                  disabled={isLoading}
-                />
-                {i < finalTestQuestions.length - 1 && (
-                  <div className="border-t border-warm-border mt-8" />
-                )}
-              </div>
-            ))}
+            {finalTestQuestions.map((q, i) => {
+              const isRetaking = retakeIndices.includes(i)
+              const prevResult = lastAttempt?.questions[i]
+
+              if (!isRetaking && prevResult) {
+                return (
+                  <div key={q.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-sage-bg text-sage">
+                        Passed
+                      </span>
+                      <span className="text-sm font-semibold text-ink">Question {i + 1}</span>
+                    </div>
+                    <p className="text-sm text-muted">{q.questionText}</p>
+                    {i < finalTestQuestions.length - 1 && (
+                      <div className="border-t border-warm-border mt-8" />
+                    )}
+                  </div>
+                )
+              }
+
+              return (
+                <div key={q.id}>
+                  <TestQuestion
+                    index={i}
+                    questionText={q.questionText}
+                    contextText={q.contextText}
+                    value={answers[i] ?? ''}
+                    onChange={(val) => {
+                      setAnswers((prev) => {
+                        const updated = [...prev]
+                        updated[i] = val
+                        return updated
+                      })
+                    }}
+                    disabled={isLoading}
+                  />
+                  {i < finalTestQuestions.length - 1 && (
+                    <div className="border-t border-warm-border mt-8" />
+                  )}
+                </div>
+              )
+            })}
 
             <div className="flex items-center justify-between pt-4">
               <span className="text-[11px] text-faint">Attempt {attemptNumber}</span>
               <button
                 type="submit"
-                disabled={isLoading || answers.some((a) => !a.trim())}
+                disabled={isLoading || retakeIndices.some((i) => !answers[i]?.trim())}
                 className="bg-ink text-warm-card text-sm font-semibold px-6 py-2.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50"
               >
                 {isLoading ? 'Checking your answers…' : 'Submit answers'}

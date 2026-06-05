@@ -50,11 +50,17 @@ export default function TestPage() {
     )
   }
 
-  // Narrowed local const — TypeScript now treats `section` as non-nullable in all closures below
   const section = sectionMaybe
-
   const sectionProgress = state.sections[id]
+  const lastAttempt = sectionProgress?.attempts[sectionProgress.attempts.length - 1]
   const attemptNumber = (sectionProgress?.attempts.length ?? 0) + 1
+
+  // If last attempt was a clean run, treat this as a fresh voluntary retake (all questions)
+  // If last attempt had failures, only show the questions that failed
+  const allIndices = section.questions.map((_, i) => i)
+  const retakeIndices: number[] = (!lastAttempt || lastAttempt.isCleanRun)
+    ? allIndices
+    : allIndices.filter((i) => !lastAttempt.questions[i]?.pass)
 
   async function scoreQuestion(q: Question, answer: string): Promise<QuestionResult> {
     const req: ScoreRequest = {
@@ -85,10 +91,20 @@ export default function TestPage() {
     setPhase({ type: 'loading' })
 
     try {
-      // Score all questions in parallel
-      const results = await Promise.all(
-        section.questions.map((q, i) => scoreQuestion(q, answers[i] ?? ''))
+      // Score only the questions being retaken, in parallel
+      const scoredRetakes = await Promise.all(
+        retakeIndices.map(async (i) => {
+          const result = await scoreQuestion(section.questions[i], answers[i] ?? '')
+          return { index: i, result }
+        })
       )
+
+      // Merge: carry forward passed results, use new scores for retakes
+      const results: QuestionResult[] = section.questions.map((_, i) => {
+        const retakeResult = scoredRetakes.find((r) => r.index === i)
+        if (retakeResult) return retakeResult.result
+        return lastAttempt!.questions[i]
+      })
 
       const isCleanRun = results.every((r) => r.pass)
       const currentState = loadState() ?? state!
@@ -108,7 +124,6 @@ export default function TestPage() {
       const consecutiveCleanRuns = newSection.consecutiveCleanRuns
       const isPassed = newSection.status === 'passed'
 
-      // Send results in background — do not await
       fetch('/api/send-results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,7 +134,7 @@ export default function TestPage() {
           passed: isPassed,
           consecutiveCleanRuns,
         }),
-      }).catch(() => {/* silent fail — results already saved locally */})
+      }).catch(() => {})
 
       setPhase({ type: 'results', results, isCleanRun, consecutiveCleanRuns, isPassed })
     } catch {
@@ -159,10 +174,7 @@ export default function TestPage() {
 
         {/* Heading */}
         <h1 className="text-2xl font-bold text-ink mb-1">{section.title}</h1>
-        <p className="text-sm text-muted mb-8">
-          Attempt {attemptNumber}
-          {sectionProgress?.consecutiveCleanRuns === 1 ? ' · 1 of 2 consecutive clean runs achieved' : ''}
-        </p>
+        <p className="text-sm text-muted mb-8">Attempt {attemptNumber}</p>
 
         {/* Results view */}
         {phase.type === 'results' && (
@@ -194,33 +206,55 @@ export default function TestPage() {
         {/* Questions */}
         {(isAnswering || isLoading) && (
           <form onSubmit={handleSubmit} className="space-y-8">
-            {section.questions.map((q, i) => (
-              <div key={q.id}>
-                <TestQuestion
-                  index={i}
-                  questionText={q.questionText}
-                  contextText={q.contextText}
-                  value={answers[i] ?? ''}
-                  onChange={(val) => {
-                    setAnswers((prev) => {
-                      const updated = [...prev]
-                      updated[i] = val
-                      return updated
-                    })
-                  }}
-                  disabled={isLoading}
-                />
-                {i < section.questions.length - 1 && (
-                  <div className="border-t border-warm-border mt-8" />
-                )}
-              </div>
-            ))}
+            {section.questions.map((q, i) => {
+              const isRetaking = retakeIndices.includes(i)
+              const prevResult = lastAttempt?.questions[i]
+
+              if (!isRetaking && prevResult) {
+                return (
+                  <div key={q.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-sage-bg text-sage">
+                        Passed
+                      </span>
+                      <span className="text-sm font-semibold text-ink">Question {i + 1}</span>
+                    </div>
+                    <p className="text-sm text-muted">{q.questionText}</p>
+                    {i < section.questions.length - 1 && (
+                      <div className="border-t border-warm-border mt-8" />
+                    )}
+                  </div>
+                )
+              }
+
+              return (
+                <div key={q.id}>
+                  <TestQuestion
+                    index={i}
+                    questionText={q.questionText}
+                    contextText={q.contextText}
+                    value={answers[i] ?? ''}
+                    onChange={(val) => {
+                      setAnswers((prev) => {
+                        const updated = [...prev]
+                        updated[i] = val
+                        return updated
+                      })
+                    }}
+                    disabled={isLoading}
+                  />
+                  {i < section.questions.length - 1 && (
+                    <div className="border-t border-warm-border mt-8" />
+                  )}
+                </div>
+              )
+            })}
 
             <div className="flex items-center justify-between pt-4">
               <span className="text-[11px] text-faint">Attempt {attemptNumber}</span>
               <button
                 type="submit"
-                disabled={isLoading || answers.some((a) => !a.trim())}
+                disabled={isLoading || retakeIndices.some((i) => !answers[i]?.trim())}
                 className="bg-ink text-warm-card text-sm font-semibold px-6 py-2.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50"
               >
                 {isLoading ? 'Checking your answers…' : 'Submit answers'}

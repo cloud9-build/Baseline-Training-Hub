@@ -5,7 +5,7 @@ export function formatResultsEmail(data: SendResultsRequest): string {
 
   const status = passed
     ? 'Passed'
-    : `In Progress — ${consecutiveCleanRuns} of 2 consecutive clean runs achieved`
+    : `In Progress — ${consecutiveCleanRuns > 0 ? '1 clean run achieved' : '0 clean runs achieved'}`
 
   const latestTimestamp = attempts[attempts.length - 1]?.timestamp
   const dateStr = latestTimestamp

@@ -7,6 +7,9 @@ import {
   isSectionUnlocked,
   markQuickReferenceDone,
   isAppComplete,
+  getCurrentUserName,
+  setCurrentUserName,
+  loadStateForName,
   SECTION_ORDER,
   FINAL_TEST_ID,
 } from '../state'
@@ -23,17 +26,47 @@ beforeEach(() => {
   localStorage.clear()
 })
 
+describe('getCurrentUserName / setCurrentUserName', () => {
+  it('returns null when no user set', () => {
+    expect(getCurrentUserName()).toBeNull()
+  })
+
+  it('returns the name after setting', () => {
+    setCurrentUserName('Jordan')
+    expect(getCurrentUserName()).toBe('Jordan')
+  })
+})
+
+describe('loadStateForName', () => {
+  it('returns null when no state stored for name', () => {
+    expect(loadStateForName('Jordan')).toBeNull()
+  })
+
+  it('returns stored state for matching name', () => {
+    const state: AppState = { traineeName: 'Jordan', sections: {} }
+    saveState(state)
+    expect(loadStateForName('Jordan')).toEqual(state)
+  })
+
+  it('isolates state between different users', () => {
+    const j: AppState = { traineeName: 'Jordan', sections: {} }
+    const a: AppState = { traineeName: 'Alex', sections: {} }
+    saveState(j)
+    saveState(a)
+    expect(loadStateForName('Jordan')).toEqual(j)
+    expect(loadStateForName('Alex')).toEqual(a)
+  })
+})
+
 describe('loadState / saveState', () => {
-  it('returns null when nothing stored', () => {
+  it('returns null when no current user is set', () => {
     expect(loadState()).toBeNull()
   })
 
-  it('round-trips state through localStorage', () => {
-    const state: AppState = {
-      traineeName: 'Jordan',
-      sections: {},
-    }
+  it('round-trips state through localStorage for current user', () => {
+    const state: AppState = { traineeName: 'Jordan', sections: {} }
     saveState(state)
+    setCurrentUserName('Jordan')
     expect(loadState()).toEqual(state)
   })
 })
@@ -62,17 +95,16 @@ describe('recordAttempt', () => {
     expect(state.sections['before-you-reply'].consecutiveCleanRuns).toBe(0)
   })
 
-  it('sets status to passed after two consecutive clean runs', () => {
+  it('sets status to passed after one clean run', () => {
     let state: AppState = { traineeName: 'Jordan', sections: {} }
     state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 1))
-    state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 2))
     expect(state.sections['before-you-reply'].status).toBe('passed')
-    expect(state.sections['before-you-reply'].consecutiveCleanRuns).toBe(2)
+    expect(state.sections['before-you-reply'].consecutiveCleanRuns).toBe(1)
   })
 
-  it('does not pass section on one clean run', () => {
+  it('does not pass section on a failed run', () => {
     let state: AppState = { traineeName: 'Jordan', sections: {} }
-    state = recordAttempt(state, 'before-you-reply', mockAttempt(true, 1))
+    state = recordAttempt(state, 'before-you-reply', mockAttempt(false, 1))
     expect(state.sections['before-you-reply'].status).toBe('in-progress')
   })
 

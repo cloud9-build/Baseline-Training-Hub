@@ -1,4 +1,3 @@
-import ScreenshotPlaceholder from './ScreenshotPlaceholder'
 import GuestJourneyFlowchart from './GuestJourneyFlowchart'
 
 interface Props {
@@ -64,7 +63,6 @@ export default function StudyContent({ sectionId }: Props) {
               'Pre-arrival or check-in related → check Guesty reservation statuses (T&S, Documentation, Deposit) + Breezeway cleaning status and maintenance flags',
             ]} />
           </div>
-          <ScreenshotPlaceholder label="Guesty side panel — payout, guest count, guest list, unit capacity, dates, and unit number — each field labelled" />
           <p className="text-sm text-ink leading-relaxed">
             The goal: come back with a reply that answers everything so the guest does not have to follow up. Anticipate the next question they are going to ask and answer it before they ask it.
           </p>
@@ -255,41 +253,6 @@ export default function StudyContent({ sectionId }: Props) {
             </ol>
           </SituationCard>
 
-          <SituationCard title="Claims and damage">
-            <p>Trigger: Althea posts damage evidence (photos/video) to the WhatsApp group.</p>
-            <p>The first CS team member to respond becomes the DRI (directly responsible individual) for that claim.</p>
-            <ol className="list-decimal list-outside pl-4 space-y-1 text-sm">
-              <li>Add an internal note in Guesty: &quot;Claim underway - [your name] handling.&quot; Toggle automations OFF immediately — this is the kill switch.</li>
-              <li>Create a task in ClickUp on the Claims &amp; Additional Fees board. Include guest name, unit, reservation number, and specific reason for the charge. Assign to Luisa (standard) or Marcus (high-value or disputed).</li>
-              <li>Compile all evidence — Althea&apos;s photos/video + &quot;before&quot; photos from the most recent inspection report + a brief internal summary.</li>
-              <li>Send the guest a neutral, professional message notifying them of the claim.</li>
-              <li>Once resolved, update the Guesty internal note to &quot;Claim Resolved.&quot; Keep automations OFF — do not send automated review requests or thank-you messages to any guest involved in a claim.</li>
-            </ol>
-          </SituationCard>
-
-          <SituationCard title="VIP guests">
-            <p><strong>Who is a VIP:</strong> A guest with a total payout of over $6,380 across all their stays.</p>
-            <p><strong>How to tag in Guesty:</strong> Operations mode → Properties → select the listing → Settings → Tags → type &quot;VIP&quot; → Save.</p>
-            <p><strong>2 weeks before arrival:</strong> Request screening. Check credit card through Stripe. Send a personalised message asking about parking, pack-n-play, early check-in, and any other special requirements.</p>
-            <p><strong>Day of arrival:</strong> Confirm all pre-arrival messages have been sent. Confirm fridge stocking with operations team. Send a message in the appropriate ClickUp channel, tagging each person responsible for a specific task.</p>
-            <p><strong>If you are off duty during a VIP&apos;s stay:</strong> You are still responsible. Ask a team member on shift to keep you updated and follow up on any issues even while off shift.</p>
-          </SituationCard>
-
-          <SituationCard title="Orphan nights (Betsy)">
-            <p>Betsy is an automated system that messages guests with orphan nights (gaps in the calendar between reservations) and offers a 30% discount to extend their stay.</p>
-            <p>When a guest responds that they are interested: thank them, explain the extension will be handled through our direct booking channel, then create a manual reservation in Guesty.</p>
-            <p><strong>Manual reservation steps:</strong></p>
-            <ol className="list-decimal list-outside pl-4 space-y-1 text-sm">
-              <li>Sign into Guesty → click &quot;+&quot; → New reservation</li>
-              <li>Enter dates and property → click Next → check availability</li>
-              <li>Click Existing guest → search by name and select them</li>
-              <li>Set status to Confirmed</li>
-              <li>Adjust the accommodation fare to exactly match the amount Betsy quoted — remove cleaning fees or any fees already covered in the main booking. Double-check final payout matches Betsy&apos;s offer exactly.</li>
-              <li>Fill in any required custom fields</li>
-              <li>Add all relevant sales tags so orphan night conversions can be tracked</li>
-              <li>Book and confirm with the guest in writing</li>
-            </ol>
-          </SituationCard>
         </div>
       )
 
@@ -340,13 +303,6 @@ export default function StudyContent({ sectionId }: Props) {
                 'Neighbouring Cloud9 unit: flag to Althea',
                 'City noise: mention earplugs in bedside tables, log in ClickUp as Completed',
                 'Always log everything regardless',
-              ],
-            },
-            {
-              title: 'VIP threshold',
-              items: [
-                'Over $6,380 total payout across all stays = VIP',
-                'Tag in Guesty, proactive outreach 2 weeks before',
               ],
             },
             {

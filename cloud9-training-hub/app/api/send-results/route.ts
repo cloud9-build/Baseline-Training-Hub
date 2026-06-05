@@ -1,33 +1,40 @@
-import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { SendResultsRequest } from '@/lib/types'
-import { formatResultsEmail } from '@/lib/emailFormatter'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!process.env.SEND_TO_EMAIL) {
-    console.error('[send-results] SEND_TO_EMAIL is not configured')
-    return NextResponse.json({ error: 'Email not configured' }, { status: 500 })
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[send-results] Supabase is not configured')
+    return NextResponse.json({ error: 'Storage not configured' }, { status: 500 })
   }
 
   try {
     const body = (await req.json()) as SendResultsRequest
-    const { traineeName, sectionName, passed } = body
+    const { traineeName, sectionName, passed, consecutiveCleanRuns, attempts } = body
 
-    const subject = `${traineeName} — ${sectionName} — ${passed ? 'Passed' : 'In Progress'}`
-    const text = formatResultsEmail(body)
-
-    await resend.emails.send({
-      from: 'training@yourdomain.com',
-      to: process.env.SEND_TO_EMAIL,
-      subject,
-      text,
+    const { error } = await getSupabase().from('attempts').insert({
+      trainee_name: traineeName,
+      section_name: sectionName,
+      passed,
+      consecutive_clean_runs: consecutiveCleanRuns,
+      questions: attempts[attempts.length - 1]?.questions ?? [],
     })
+
+    if (error) {
+      console.error('[send-results] Supabase error:', error)
+      return NextResponse.json({ error: 'Failed to save results' }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error('[send-results] Resend error:', err)
-    return NextResponse.json({ error: 'Failed to send results' }, { status: 500 })
+    console.error('[send-results] Error:', err)
+    return NextResponse.json({ error: 'Failed to save results' }, { status: 500 })
   }
 }

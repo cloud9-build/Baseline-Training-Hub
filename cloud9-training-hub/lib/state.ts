@@ -1,6 +1,10 @@
 import { AppState, Attempt, SectionProgress } from './types'
 
-const STORAGE_KEY = 'bth_state'
+const CURRENT_USER_KEY = 'bth_current_user'
+
+function storageKey(name: string): string {
+  return `bth_${name.toLowerCase().replace(/\s+/g, '_')}`
+}
 
 export const SECTION_ORDER = [
   'before-you-reply',
@@ -13,21 +17,36 @@ export const SECTION_ORDER = [
 
 export const FINAL_TEST_ID = 'final-test'
 
-export function loadState(): AppState | null {
+export function getCurrentUserName(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(CURRENT_USER_KEY)
+}
+
+export function setCurrentUserName(name: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(CURRENT_USER_KEY, name)
+}
+
+export function loadStateForName(name: string): AppState | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey(name))
     return raw ? (JSON.parse(raw) as AppState) : null
-  } catch (e) {
-    if (process.env.NODE_ENV !== 'production') console.warn('bth_state parse error', e)
+  } catch {
     return null
   }
+}
+
+export function loadState(): AppState | null {
+  const name = getCurrentUserName()
+  if (!name) return null
+  return loadStateForName(name)
 }
 
 export function saveState(state: AppState): void {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(storageKey(state.traineeName), JSON.stringify(state))
   } catch {
     // Storage quota exceeded — state not persisted
   }
@@ -50,7 +69,7 @@ export function getOrInitSection(state: AppState, sectionId: string): SectionPro
 export function recordAttempt(state: AppState, sectionId: string, attempt: Attempt): AppState {
   const section = getOrInitSection(state, sectionId)
   const newConsecutive = attempt.isCleanRun ? section.consecutiveCleanRuns + 1 : 0
-  const isPassed = newConsecutive >= 2
+  const isPassed = newConsecutive >= 1
 
   const updated: SectionProgress = {
     status: (isPassed || section.status === 'passed') ? 'passed' : 'in-progress',
@@ -67,7 +86,6 @@ export function recordAttempt(state: AppState, sectionId: string, attempt: Attem
 export function isSectionUnlocked(state: AppState, sectionId: string): boolean {
   const idx = SECTION_ORDER.indexOf(sectionId)
   if (idx === -1) {
-    // final-test unlocks when all 6 sections are passed
     return SECTION_ORDER.every(
       (id) => state.sections[id]?.status === 'passed'
     )
@@ -82,7 +100,7 @@ export function markQuickReferenceDone(state: AppState): AppState {
   const section: SectionProgress = {
     status: 'passed',
     attempts: [],
-    consecutiveCleanRuns: 2,
+    consecutiveCleanRuns: 1,
   }
   return {
     ...state,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { sections } from '@/lib/sections'
-import { loadState, saveState, initState, isSectionUnlocked, FINAL_TEST_ID } from '@/lib/state'
+import { loadStateForName, setCurrentUserName, saveState, initState, isSectionUnlocked, FINAL_TEST_ID } from '@/lib/state'
 import { AppState } from '@/lib/types'
 import SectionCard from '@/components/SectionCard'
 import Link from 'next/link'
@@ -14,21 +14,27 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true)
-    setState(loadState())
   }, [])
 
   function handleStart(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = nameInput.trim()
     if (!trimmed) return
-    const newState = initState(trimmed)
-    saveState(newState)
-    setState(newState)
+    const existing = loadStateForName(trimmed)
+    if (existing) {
+      setCurrentUserName(trimmed)
+      setState(existing)
+    } else {
+      const newState = initState(trimmed)
+      saveState(newState)
+      setCurrentUserName(trimmed)
+      setState(newState)
+    }
   }
 
   if (!mounted) return null
 
-  // Name entry
+  // Always show name entry until submitted
   if (!state) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4">
@@ -51,7 +57,7 @@ export default function HomePage() {
               type="submit"
               className="bg-ink text-warm-card text-sm font-semibold px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity"
             >
-              Start
+              Go
             </button>
           </form>
         </div>
