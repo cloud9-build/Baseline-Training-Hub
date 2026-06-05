@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-warm-bg: #f5f4f0;
+  --color-warm-card: #faf9f6;
+  --color-warm-border: #e8e4dc;
+  --color-sage: #87a87e;
+  --color-sage-bg: #eef3ec;
+  --color-sage-border: #c8ddbd;
+  --color-ink: #1a1a1a;
+  --color-muted: #999999;
+  --color-faint: #bbbbbb;
+  --font-family-sans: var(--font-jakarta), sans-serif;
+  --radius-card: 12px;
+  --radius-frame: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+}
